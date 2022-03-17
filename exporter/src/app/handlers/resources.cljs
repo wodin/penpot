@@ -11,11 +11,12 @@
    ["fs" :as fs]
    ["os" :as os]
    ["path" :as path]
-   [app.util.shell :as sh]
    [app.common.data :as d]
    [app.common.data.macros :as dm]
    [app.common.exceptions :as ex]
    [app.common.uuid :as uuid]
+   [app.util.shell :as sh]
+   [cljs.core :as c]
    [cuerdas.core :as str]
    [promesa.core :as p]))
 
@@ -33,18 +34,19 @@
 
 (defn create
   "Generates ephimeral resource object."
-  [type]
+  [type name]
   (let [task-id (uuid/next)]
     {:path (get-path type task-id)
      :mtype (get-mtype type)
-     :id (dm/str (name type) "." task-id)}))
+     :name name
+     :id (dm/str (c/name type) "." task-id)}))
 
 (defn- write-as-zip!
   [{:keys [id path]} items on-progress]
   (let [^js zip  (arc/create "zip")
         ^js out  (fs/createWriteStream path)
         append!  (fn [{:keys [data name] :as result}]
-                  (.append zip data #js {:name name}))
+                   (.append zip data #js {:name name}))
         progress (atom 0)]
     (p/create
      (fn [resolve reject]
@@ -53,10 +55,12 @@
        (.on zip "entry" (fn [data]
                           (let [name (unchecked-get data "name")
                                 num  (swap! progress inc)]
+                            #_(when (= 2 num)
+                              (.abort ^js zip)
+                              (reject (js/Error. "unable to create zip file")))
                             (on-progress
                              {:total (count items)
-                              :done num
-                              :name name}))))
+                              :done num}))))
        (.pipe zip out)
        (-> (reduce (fn [res export-fn]
                      (p/then res (fn [_] (-> (export-fn) (p/then append!)))))
@@ -66,20 +70,31 @@
            (p/catch reject))))))
 
 (defn create-simple
-  [{:keys [type data] :as params}]
-  (let [{:keys [path] :as resource} (create type)]
-    (-> (.writeFile fs/promises path data)
+  [& {:keys [task resource on-progress on-complete on-error]
+      :or {on-progress identity
+           on-complete identity
+           on-error identity}
+      :as params}]
+  (let [path (:path resource)]
+    (-> (task)
+        (p/then (fn [{:keys [data name]}]
+                  (on-progress {:total 1 :done 1 :name name})
+                  (.writeFile fs/promises path data)))
         (p/then #(sh/stat path))
-        (p/then #(merge resource %)))))
+        (p/then #(merge resource %))
+        (p/finally (fn [result cause]
+                     (if cause
+                       (on-error cause)
+                       (on-complete result)))))))
 
 (defn create-zip
   "Creates a resource with multiple files merget into a single zip file."
-  [& {:keys [resource items on-error on-progress on-complete]
+  [& {:keys [resource tasks on-error on-progress on-complete]
       :or {on-error identity
            on-progress identity
            on-complete identity}}]
-  (let [{:keys [path id] :as resource} (or resource (create :zip))]
-    (-> (write-as-zip! resource items on-progress)
+  (let [{:keys [path id] :as resource} resource]
+    (-> (write-as-zip! resource tasks on-progress)
         (p/then #(sh/stat path))
         (p/then #(merge resource %))
         (p/finally (fn [result cause]

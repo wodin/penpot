@@ -29,7 +29,6 @@
    [app.main.data.workspace.changes :as dch]
    [app.main.data.workspace.common :as dwc]
    [app.main.data.workspace.drawing :as dwd]
-   [app.main.data.workspace.exports :as dwe]
    [app.main.data.workspace.fix-bool-contents :as fbc]
    [app.main.data.workspace.groups :as dwg]
    [app.main.data.workspace.guides :as dwgu]
@@ -117,15 +116,16 @@
             (rx/take 1)
             (rx/map deref)
             (rx/mapcat (fn [bundle]
-                         (rx/merge
-                          (rx/of (dwn/initialize file-id)
-                                 (dwp/initialize-file-persistence file-id)
-                                 (dwc/initialize-indices bundle))
+                         (let [team-id (-> bundle :project :team-id)]
+                           (rx/merge
+                            (rx/of (dwn/initialize team-id file-id)
+                                   (dwp/initialize-file-persistence file-id)
+                                   (dwc/initialize-indices bundle))
 
-                          (->> stream
-                               (rx/filter #(= ::dwc/index-initialized %))
-                               (rx/take 1)
-                               (rx/map #(file-initialized bundle)))))))))
+                            (->> stream
+                                 (rx/filter #(= ::dwc/index-initialized %))
+                                 (rx/take 1)
+                                 (rx/map #(file-initialized bundle))))))))))
 
     ptk/EffectEvent
     (effect [_ _ _]
@@ -338,14 +338,6 @@
 
 (dm/export layout/toggle-layout-flag)
 (dm/export layout/remove-layout-flag)
-
-;; --- Export 
-
-(dm/export dwe/toggle-export-detail-visibililty)
-(dm/export dwe/set-export-detail-visibililty)
-(dm/export dwe/update-export-status)
-(dm/export dwe/store-export-task-id)
-(dm/export dwe/retry-export)
 
 ;; --- Nudge
 
@@ -991,7 +983,7 @@
             pages (get-in state [:workspace-data
                                  :pages-index])
             file-thumbnails (->> pages
-                     (mapcat #(extract-file-thumbnails-from-page state selected %)))]        
+                     (mapcat #(extract-file-thumbnails-from-page state selected %)))]
         (rx/concat
          (rx/from
           (for [ft file-thumbnails]

@@ -27,11 +27,16 @@
   [error exchange]
   (let [{:keys [type message code] :as data} (ex-data error)]
     (cond
-      (= :validation type)
-      (-> exchange
-          (assoc :response/status 400)
-          (assoc :response/body (t/encode data))
-          (assoc :response/headers {"content-type" "application/transit+json"}))
+      (or (= :validation type)
+          (= :assertion type))
+      (let [explain (us/pretty-explain data)
+            data    (-> data
+                        (assoc :explain explain)
+                        (dissoc ::s/problems ::s/value ::s/spec))]
+        (-> exchange
+            (assoc :response/status 400)
+            (assoc :response/body (t/encode data))
+            (assoc :response/headers {"content-type" "application/transit+json"})))
 
       (= :not-found type)
       (-> exchange

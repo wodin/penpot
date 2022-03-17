@@ -7,7 +7,7 @@
 (ns app.main.data.workspace.shortcuts
   (:require
    [app.main.data.events :as ev]
-   [app.main.data.modal :as modal]
+   [app.main.data.exports :as de]
    [app.main.data.shortcuts :as ds]
    [app.main.data.workspace :as dw]
    [app.main.data.workspace.colors :as mdc]
@@ -65,8 +65,7 @@
    :export-shapes     {:tooltip (ds/meta-shift "E")
                        :command (ds/c-mod "shift+e")
                        :fn #(st/emit!
-                             (modal/show
-                              {:type :export-shapes}))}
+                             (de/show-workspace-export-dialog))}
 
    :select-all        {:tooltip (ds/meta "A")
                        :command (ds/c-mod "a")
@@ -372,7 +371,7 @@
    :toggle-focus-mode    {:command "f"
                           :tooltip "F"
                           :fn #(st/emit! (dw/toggle-focus-mode))}
-   
+
    :thumbnail-set {:tooltip (ds/shift "T")
                    :command "shift+t"
                    :fn #(st/emit! (dw/toggle-file-thumbnail-selected))}})

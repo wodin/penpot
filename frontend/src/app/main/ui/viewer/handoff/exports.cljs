@@ -7,38 +7,51 @@
 (ns app.main.ui.viewer.handoff.exports
   (:require
    [app.common.data :as d]
+   [app.main.data.exports :as de]
    [app.main.refs :as refs]
+   [app.main.store :as st]
    [app.main.ui.icons :as i]
-   [app.main.ui.workspace.sidebar.options.menus.exports :as we]
    [app.util.dom :as dom]
    [app.util.i18n :refer [tr, c]]
    [rumext.alpha :as mf]))
 
 (mf/defc exports
-  [{:keys [shapes name page-id file-id] :as props}]
-  (let [exports  (mf/use-state [])
-        first-object-name (-> (first shapes) :name)
-        viewer-state (mf/deref refs/viewer-data)
-        page (get-in viewer-state [:pages page-id])
-        filename (cond
-                   ;; one export from one shape
-                   (and (= (count shapes) 1)
-                        (= (count @exports) 1)
-                        (not (empty (:suffix (first @exports)))))
-                   (str
-                    first-object-name
-                    (:suffix (first @exports)))
+  {::mf/wrap [#(mf/memo % =)]}
+  [{:keys [shapes page-id file-id type] :as props}]
+  (let [exports     (mf/use-state [])
+        xstate      (mf/deref refs/export)
+        vstate      (mf/deref refs/viewer-data)
+        page        (get-in vstate [:pages page-id])
+        filename    (if (= (count shapes) 1)
+                      (let [sname   (-> shapes first :name)
+                            suffix (-> @exports first :suffix)]
+                        (cond-> sname
+                          (and (= 1 (count @exports)) (some? suffix))
+                          (str suffix)))
+                      (:name page))
 
-                   ;; multiple exports from one shape
-                   (and (= (count shapes) 1)
-                        (> (count @exports) 1))
-                   first-object-name
+        in-progress? (:in-progress xstate)
 
-                   :else
-                   (:name page))
+        on-download
+        (fn [event]
+          (dom/prevent-default event)
+          (if (= :multiple type)
+            (st/emit! (de/show-viewer-export-dialog {:shapes shapes
+                                                     :filename filename
+                                                     :page-id page-id
+                                                     :file-id file-id}))
 
-        export-in-progress? (mf/deref refs/export-in-progress?)
-        on-download (we/use-download-export shapes filename page-id file-id @exports)
+            ;; In other all cases we only allowed to have a single
+            ;; shape-id because multiple shape-ids are handled
+            ;; separatelly by the export-modal.
+            (let [defaults {:page-id page-id
+                            :file-id file-id
+                            :name filename
+                            :object-id (-> shapes first :id)}
+                  exports  (mapv #(merge % defaults) @exports)]
+              (if (= 1 (count exports))
+                (st/emit! (de/request-simple-export {:export (first exports)}))
+                (st/emit! (de/request-multiple-export {:exports exports :filename filename}))))))
 
         add-export
         (mf/use-callback
@@ -123,10 +136,10 @@
             i/minus]])
 
         [:div.btn-icon-dark.download-button
-         {:on-click (when-not export-in-progress? on-download)
-          :class (dom/classnames :btn-disabled export-in-progress?)
-          :disabled export-in-progress?}
-         (if export-in-progress?
+         {:on-click (when-not in-progress? on-download)
+          :class (dom/classnames :btn-disabled in-progress?)
+          :disabled in-progress?}
+         (if in-progress?
            (tr "workspace.options.exporting-object")
            (tr "workspace.options.export-object" (c (count shapes))))]])]))
 

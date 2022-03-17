@@ -62,8 +62,8 @@
 
 (defonce ongoing-tasks (l/atom #{}))
 
-(add-watch ongoing-tasks "::ongoing-tasks"
+(add-watch ongoing-tasks ::ongoing-tasks
            (fn [_ _ _ events]
-             (if (empty? @ongoing-tasks)
+             (if (empty? events)
                (obj/set! js/window "onbeforeunload" nil)
                (obj/set! js/window "onbeforeunload" (constantly false)))))

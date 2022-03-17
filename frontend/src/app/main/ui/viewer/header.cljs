@@ -13,11 +13,10 @@
    [app.main.refs :as refs]
    [app.main.store :as st]
    [app.main.ui.components.dropdown :refer [dropdown]]
+   [app.main.ui.export :refer [export-progress-widget]]
    [app.main.ui.icons :as i]
    [app.main.ui.viewer.comments :refer [comments-menu]]
    [app.main.ui.viewer.interactions :refer [flows-menu interactions-menu]]
-   ;; TODO: review import. ¿Debería de estar en workspace si es común?
-   [app.main.ui.workspace.header :refer [export-progress-widget]]
    [app.util.dom :as dom]
    [app.util.i18n :as i18n :refer [tr]]
    [rumext.alpha :as mf]))
@@ -63,7 +62,6 @@
 (mf/defc header-options
   [{:keys [section zoom page file index permissions]}]
   (let [fullscreen? (mf/deref refs/viewer-fullscreen?)
-        export-in-progress? (mf/deref refs/export-in-progress?)
 
         toggle-fullscreen
         (mf/use-callback
@@ -91,8 +89,7 @@
 
        [:div.view-options])
 
-     (when export-in-progress?
-       [:& export-progress-widget])
+     [:& export-progress-widget]
      [:& zoom-widget
       {:zoom zoom
        :on-increase (st/emitf dv/increase-zoom)

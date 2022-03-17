@@ -101,6 +101,7 @@
 (def workspace-drawing
   (l/derived :workspace-drawing st/state))
 
+;; TODO: rename to workspace-selected (?)
 (def selected-shapes
   (l/derived wsh/lookup-selected st/state =))
 
@@ -254,11 +255,7 @@
 
 (defn objects-by-id
   [ids]
-  (let [selector
-        (fn [state]
-          (let [objects (wsh/lookup-page-objects state)]
-            (into [] (keep (d/getf objects)) ids)))]
-    (l/derived selector st/state =)))
+  (l/derived #(wsh/lookup-shapes % ids) st/state =))
 
 (defn- set-content-modifiers [state]
   (fn [id shape]

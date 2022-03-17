@@ -7,18 +7,20 @@
 (ns app.main.ui.workspace.header
   (:require
    [app.common.data :as d]
+   [app.common.data.macros :as dm]
    [app.common.math :as mth]
    [app.config :as cf]
    [app.main.data.events :as ev]
-   [app.main.data.messages :as dm]
+   [app.main.data.exports :as de]
+   [app.main.data.messages :as msg]
    [app.main.data.modal :as modal]
    [app.main.data.workspace :as dw]
-   [app.main.data.workspace.exports :as dwe]
    [app.main.data.workspace.shortcuts :as sc]
    [app.main.refs :as refs]
    [app.main.repo :as rp]
    [app.main.store :as st]
    [app.main.ui.components.dropdown :refer [dropdown]]
+   [app.main.ui.export :refer [export-progress-widget]]
    [app.main.ui.hooks.resize :as r]
    [app.main.ui.icons :as i]
    [app.main.ui.workspace.presence :refer [active-sessions]]
@@ -34,78 +36,6 @@
 
 (def workspace-persistence-ref
   (l/derived :workspace-persistence st/state))
-
-;; --- Export progress Widget
-
-(mf/defc export-progress-widget
-  {::mf/wrap [mf/memo]}
-  []
-  (let [export-in-progress? (mf/deref refs/export-in-progress?)
-        export-error? (mf/deref refs/export-error?)
-        export-health (mf/deref refs/export-health)
-        export-detail-visibililty (mf/deref refs/export-detail-visibililty)
-        export-widget-visibililty (mf/deref refs/export-widget-visibililty)
-        export-progress (mf/deref refs/export-progress)
-        exports  (mf/deref refs/exports)
-        export-total (count exports)
-        export (/ export-progress export-total)
-        circumference (* 2 Math/PI 12)
-        pct (- circumference (* circumference export))
-        export-width (if export-error?
-                       280
-                       (/ (* export-progress 280) export-total))
-        color (cond
-                export-error? "#E65244"
-                (= export-health "OK") "#31EFB8"
-                (= export-health "KO") "#FC8802")
-        export-title (cond
-                       export-error? (tr "workspace.options.exporting-object-error")
-                       (= export-health "OK") (tr "workspace.options.exporting-object")
-                       (= export-health "KO") (tr "workspace.options.exporting-object-slow"))]
-
-    [:*
-     (when export-widget-visibililty
-       [:div.export-progress-widget {:on-click (-> (st/emitf (dwe/toggle-export-detail-visibililty)))}
-        [:svg {:width "32" :height "32"}
-         [:circle {:r "12"
-                   :cx "16"
-                   :cy "16"
-                   :fill "transparent"
-                   :stroke "#64666A"
-                   :stroke-width "4"}]
-         [:circle {:r "12"
-                   :cx "16"
-                   :cy "16"
-                   :fill "transparent"
-                   :stroke color
-                   :stroke-width "4"
-                   :stroke-dasharray (str circumference " " circumference)
-                   :stroke-dashoffset pct
-                   :transform "rotate(-90 16,16)"
-                   :style {:transition "stroke-dashoffset 1s ease-in-out"}}]]])
-     (when export-detail-visibililty
-       [:div.export-progress-modal-overlay
-        [:div.export-progress-modal-container
-         [:div.export-progress-modal-header
-          [:p.export-progress-modal-title export-title]
-          (if export-error?
-            [:button.btn-secondary.retry {:on-click (-> (st/emitf (dwe/retry-export)))} (tr "workspace.options.retry")]
-            [:p.progress (str export-progress " / " export-total)])
-
-          [:button.modal-close-button {:on-click (-> (st/emitf (dwe/toggle-export-detail-visibililty)))} i/close]]
-
-         [:svg.progress-bar {:height 8 :width 280}
-          [:g
-           [:path {:d "M0 0 L280 0"
-                   :stroke "#E3E3E3"
-                   :stroke-width 30}]
-           [:path {:d (str "M0 0 L280 0")
-                   :stroke color
-                   :stroke-width 30
-                   :fill "transparent"
-                   :stroke-dasharray 280
-                   :stroke-dashoffset (- 280 export-width)
-                   :style {:transition "stroke-dashoffset 1s ease-in-out"}}]]]]])]))
 
 ;; --- Persistence state Widget
 
@@ -147,7 +77,7 @@
     :as props}]
   (let [show-dropdown? (mf/use-state false)]
     [:div.zoom-widget {:on-click #(reset! show-dropdown? true)}
-     [:span.label {} (str (mth/round (* 100 zoom)) "%")]
+     [:span.label {} (dm/str (mth/round (* 100 zoom)) "%")]
      [:span.icon i/arrow-down]
      [:& dropdown {:show @show-dropdown?
                    :on-close #(reset! show-dropdown? false)}
@@ -158,7 +88,7 @@
                                (dom/stop-propagation event)
                                (dom/prevent-default event)
                                (on-decrease))} "-"]
-         [:p.zoom-size {} (str (mth/round (* 100 zoom)) "%")]
+         [:p.zoom-size {} (dm/str (mth/round (* 100 zoom)) "%")]
          [:button {:on-click (fn [event]
                                (dom/stop-propagation event)
                                (dom/prevent-default event)
@@ -229,10 +159,7 @@
         on-export-shapes
         (mf/use-callback
          (fn [_]
-           (let []
-             (st/emit!
-              (modal/show
-               {:type :export-shapes})))))
+           (st/emit! (de/show-workspace-export-dialog))))
 
         on-export-file
         (mf/use-callback
@@ -262,20 +189,20 @@
          (mf/deps file frames)
          (fn [_]
            (when (seq frames)
-             (let [filename (str (:name file) ".pdf")
+             (let [filename (dm/str (:name file) ".pdf")
                    xform    (comp (map :id)
                                   (map (fn [id]
                                          {:file-id  (:id file)
                                           :page-id   page-id
                                           :frame-id id})))]
-               (st/emit! (dm/info (tr "workspace.options.exporting-object") {:timeout nil}))
+               (st/emit! (msg/info (tr "workspace.options.exporting-object") {:timeout nil}))
                (->> (rp/query! :export-frames (into [] xform frames))
                     (rx/subs
                      (fn [body]
                        (dom/trigger-download filename body))
                      (fn [_error]
-                       (st/emit! (dm/error (tr "errors.unexpected-error"))))
-                     (st/emitf dm/hide)))))))
+                       (st/emit! (msg/error (tr "errors.unexpected-error"))))
+                     (st/emitf msg/hide)))))))
 
         on-item-hover
         (mf/use-callback

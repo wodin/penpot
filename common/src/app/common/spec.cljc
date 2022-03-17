@@ -16,8 +16,8 @@
    ;; because of some strange interaction with cljs.spec.alpha and
    ;; modules splitting.
    [app.common.exceptions :as ex]
-   [app.common.uuid :as uuid]
    [app.common.uri :as u]
+   [app.common.uuid :as uuid]
    [cuerdas.core :as str]
    [expound.alpha :as expound]))
 
