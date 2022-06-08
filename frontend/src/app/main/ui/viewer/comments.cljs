@@ -22,7 +22,7 @@
 
 (mf/defc comments-menu
   []
-  (let [{cmode :mode cshow :show} (mf/deref refs/comments-local)
+  (let [{cmode :mode cshow :show clist :list} (mf/deref refs/comments-local)
 
         show-dropdown?  (mf/use-state false)
         toggle-dropdown (mf/use-fn #(swap! show-dropdown? not))
@@ -36,7 +36,12 @@
         update-show
         (mf/use-callback
          (fn [mode]
-           (st/emit! (dcm/update-filters {:show mode}))))]
+           (st/emit! (dcm/update-filters {:show mode}))))
+
+        update-list
+        (mf/use-callback
+         (fn [show-list]
+           (st/emit! (dcm/update-filters {:list show-list}))))]
 
     [:div.view-options {:on-click toggle-dropdown}
      [:span.label (tr "labels.comments")]
@@ -59,7 +64,14 @@
        [:li {:class (dom/classnames :selected (= :pending cshow))
              :on-click #(update-show (if (= :pending cshow) :all :pending))}
         [:span.icon i/tick]
-        [:span.label (tr "labels.hide-resolved-comments")]]]]]))
+        [:span.label (tr "labels.hide-resolved-comments")]]
+
+       [:hr]
+
+       [:li {:class (dom/classnames :selected (= :show clist))
+             :on-click #(update-list (if (= :show clist) :hide :show))}
+        [:span.icon i/tick]
+        [:span.label (tr "labels.show-comments-list")]]]]]))
 
 
 (defn- frame-contains?

@@ -21,6 +21,102 @@
 
   overflow: auto;
 
+  & .viewer-go-prev,
+  & .viewer-go-next {
+    position: absolute;
+    height: 100%;
+    display: flex;
+    align-items: center;
+
+    .arrow {
+      display: flex;
+      align-items: center;
+      border-radius: 12px;
+      background: $color-gray-50;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      fill: $color-gray-30;
+
+      svg {
+        margin-left: 5px;
+        width: 15px;
+        height: 15px;
+      }
+
+      &:hover {
+        background: $color-primary;
+        fill: $color-black;
+      }
+    }
+  }
+
+  & .viewer-go-next {
+    right: 0;
+    padding-right: 29px;
+  }
+
+  & .viewer-go-next.right-bar {
+    right: 256px;
+  }
+
+  & .viewer-go-prev {
+    left: 0;
+    padding-left: 29px;
+    & .arrow svg {
+      margin-left: 3px;
+      -webkit-transform: scaleX(-1);
+      transform: scaleX(-1);
+    }
+  }
+
+  & .handoff-svg-wrapper .viewer-go-prev {
+    left: 256px;
+  }
+
+  & .viewer-bottom {
+    position: absolute;
+    bottom: 0;
+    height: 50px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+
+    .reset {
+      display: flex;
+      align-items: center;
+      border-radius: 12px;
+      background: $color-gray-50;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      fill: $color-gray-30;
+      margin-left: 29px;
+
+      svg {
+        margin-left: 4px;
+        width: 15px;
+        height: 15px;
+      }
+
+      &:hover {
+        background: $color-primary;
+        fill: $color-black;
+      }
+    }
+
+    .counter {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      background: $color-gray-50;
+      width: 67px;
+      height: 25px;
+      fill: $color-gray-20;
+    }
+  }
+
   & .viewer-wrapper {
     position: relative;
   }
@@ -41,6 +137,23 @@
     svg {
       transform-origin: center;
     }
+  }
+
+  & .viewer-wrapper-out {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  & .comments-right-sidebar {
+    position: absolute;
+    right: 0;
+    top: 50px;
+    width: 256px;
+    height: 100%;
   }
 }
 

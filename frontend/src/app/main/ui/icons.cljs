@@ -134,6 +134,7 @@
 (def radius-4 (icon-xref :radius-4))
 (def recent (icon-xref :recent))
 (def redo (icon-xref :redo))
+(def reset (icon-xref :reset))
 (def rotate (icon-xref :rotate))
 (def ruler (icon-xref :ruler))
 (def ruler-tool (icon-xref :ruler-tool))
