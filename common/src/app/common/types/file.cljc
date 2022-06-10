@@ -9,7 +9,6 @@
    [app.common.spec :as us]
    [app.common.types.page :as ctp]
    [app.common.types.shape.color :as ctsc]
-   [app.common.types.shape.typography :as ctst]
    [clojure.spec.alpha :as s]))
 
 (s/def :internal.media-object/name string?)
