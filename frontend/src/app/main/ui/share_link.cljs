@@ -100,19 +100,20 @@
                       (dm/show {:type :info
                                 :content (tr "common.share-link.link-deleted-success")
                                 :timeout 3000}))))
-        
+
         manage-open-ops
         (fn [_]
           (swap! open-ops not))
-        
+
         on-who-change
-        (fn [type value]
-          (if (= type :comment)
-            (swap! opts assoc :who-comment value)
-            (swap! opts assoc :who-inspect value)
-            )
-          )
-        ]
+        (fn [type event]
+          (let [target  (dom/get-target event)
+                value   (dom/get-value target)
+                value   (keyword value)]
+            (prn type value)
+            (if (= type :comment)
+              (swap! opts assoc :who-comment (d/name value))
+              (swap! opts assoc :who-inspect (d/name value)))))]
 
     (mf/use-effect
      (mf/deps file slinks @opts)
