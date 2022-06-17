@@ -127,12 +127,33 @@
         }
         .view-mode {
           min-height: 34px;
+          .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            .count-pages {
+              font-size: $fs12;
+              color: $color-gray-30;
+            }
+          }
+          .current-tag {
+            font-size: $fs12;
+            color: $color-gray-30;
+          }
         }
-        .view-mode,
         .access-mode,
         .inspect-mode {
           display: grid;
           grid-template-columns: auto 1fr;
+          .items {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+          }
+        }
+        .view-mode,
+        .access-mode,
+        .inspect-mode {
           margin: 8px 0;
           .subtitle {
             display: flex;
@@ -151,11 +172,7 @@
               }
             }
           }
-
           .items {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
             .input-select {
               background-image: url("/images/icons/arrow-down.svg");
               margin: 0;

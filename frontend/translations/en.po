@@ -205,13 +205,10 @@ msgid "common.share-link.title"
 msgstr "Share prototypes"
 
 msgid "common.share-link.view-all"
-msgstr "All"
+msgstr "Select All"
 
-msgid "common.share-link.view-current"
-msgstr "Current"
-
-msgid "common.share-link.view-selected"
-msgstr "Selected"
+msgid "common.share-link.current-tag"
+msgstr "(current)"
 
 msgid "common.share-link.manage-ops"
 msgstr "Manage permissions"
@@ -221,6 +218,11 @@ msgstr "Only team members"
 
 msgid "common.share-link.all-users"
 msgstr "All Penpot users"
+
+msgid "common.share-link.page-shared"
+msgid_plural "common.share-link.page-shared"
+msgstr[0] "1 page shared"
+msgstr[1] "%s pages shared"
 
 #: src/app/main/ui/workspace/header.cljs, src/app/main/ui/dashboard/file_menu.cljs
 msgid "dashboard.add-shared"
