@@ -815,8 +815,20 @@ msgid "feedback.title"
 msgstr "Correo electrónico"
 
 #: src/app/main/ui/settings/feedback.cljs
-msgid "feedback.twitter-go-to"
+msgid "feedback.discourse-go-to"
 msgstr "Ir a Twitter"
+
+#: src/app/main/ui/settings/feedback.cljs
+msgid "feedback.discourse-subtitle1"
+msgstr "Estamos encantados de tenerte por aqui. Si necesitas ayuda, busca, escribe o pregunta lo que necesites."
+
+#: src/app/main/ui/settings/feedback.cljs
+msgid "feedback.discourse-title"
+msgstr "Comunidad de Penpot"
+
+#: src/app/main/ui/settings/feedback.cljs
+msgid "feedback.twitter-go-to"
+msgstr "Ir al foro de Penpot"
 
 #: src/app/main/ui/settings/feedback.cljs
 msgid "feedback.twitter-subtitle1"
