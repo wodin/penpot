@@ -7,6 +7,8 @@
 (ns app.main
   (:require
    [app.common.logging :as l]
+   [app.auth]
+   [app.auth.oidc]
    [app.config :as cf]
    [app.util.time :as dt]
    [integrant.core :as ig])
@@ -123,13 +125,29 @@
     :max-body-size           (cf/get :http-server-max-body-size)
     :max-multipart-body-size (cf/get :http-server-max-multipart-body-size)}
 
+   :app.auth.oidc/providers
+   {:http-client (ig/ref :app.http/client)}
+
+   :app.auth.oidc/routes
+   {:providers   (ig/ref :app.auth.oidc/providers)
+    :tokens      (ig/ref :app.tokens/tokens)
+    :http-client (ig/ref :app.http/client)
+    :pool        (ig/ref :app.db/pool)
+    :session     (ig/ref :app.http/session)
+    :public-uri  (cf/get :public-uri)
+    :executor    (ig/ref [::default :app.worker/executor])}
+
+   :app.auth/routes
+   {:oidc-routes (ig/ref :app.auth.oidc/routes)}
+
    :app.http/router
    {:assets        (ig/ref :app.http.assets/handlers)
     :feedback      (ig/ref :app.http.feedback/handler)
     :session       (ig/ref :app.http/session)
     :awsns-handler (ig/ref :app.http.awsns/handler)
-    :oauth         (ig/ref :app.http.oauth/handler)
+    ;; :oauth         (ig/ref :app.http.oauth/handler)
     :debug-routes  (ig/ref :app.http.debug/routes)
+    :auth-routes   (ig/ref :app.auth/routes)
     :ws            (ig/ref :app.http.websocket/handler)
     :metrics       (ig/ref :app.metrics/metrics)
     :public-uri    (cf/get :public-uri)
@@ -162,15 +180,15 @@
    {:pool     (ig/ref :app.db/pool)
     :executor (ig/ref [::default :app.worker/executor])}
 
-   :app.http.oauth/handler
-   {:rpc         (ig/ref :app.rpc/rpc)
-    :session     (ig/ref :app.http/session)
-    :pool        (ig/ref :app.db/pool)
-    :tokens      (ig/ref :app.tokens/tokens)
-    :audit       (ig/ref :app.loggers.audit/collector)
-    :executor    (ig/ref [::default :app.worker/executor])
-    :http-client (ig/ref :app.http/client)
-    :public-uri  (cf/get :public-uri)}
+   ;; :app.http.oauth/handler
+   ;; {:rpc         (ig/ref :app.rpc/rpc)
+   ;;  :session     (ig/ref :app.http/session)
+   ;;  :pool        (ig/ref :app.db/pool)
+   ;;  :tokens      (ig/ref :app.tokens/tokens)
+   ;;  :audit       (ig/ref :app.loggers.audit/collector)
+   ;;  :executor    (ig/ref [::default :app.worker/executor])
+   ;;  :http-client (ig/ref :app.http/client)
+   ;;  :public-uri  (cf/get :public-uri)}
 
    :app.rpc/rpc
    {:pool        (ig/ref :app.db/pool)

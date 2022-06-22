@@ -15,7 +15,9 @@
    [yetti.adapter :as yt]
    [yetti.middleware :as ymw]
    [yetti.request :as yrq]
-   [yetti.response :as yrs])
+   [yetti.response :as yrs]
+   [promesa.core :as p]
+   [promesa.exec :as px])
   (:import
    com.fasterxml.jackson.core.io.JsonEOFException
    io.undertow.server.RequestTooBigException
@@ -192,3 +194,21 @@
 (def restrict-methods
   {:name ::restrict-methods
    :compile compile-restrict-methods})
+
+(def with-promise-async
+  {:compile
+   (fn [& _]
+     (fn [f {:keys [executor] :as cfg}]
+       (fn [request respond raise]
+         (-> (px/submit! executor #(f request))
+             (p/then respond)
+             (p/catch raise)))))})
+
+(def with-config
+  {:compile
+   (fn [& _]
+     (fn [f cfg]
+       (fn [request]
+         (f cfg request))))})
+
+

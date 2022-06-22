@@ -16,6 +16,7 @@
    [app.rpc.commands.binfile :as binf]
    [app.rpc.mutations.files :refer [create-file]]
    [app.rpc.queries.profile :as profile]
+   [app.http.middleware :as hmw]
    [app.util.blob :as blob]
    [app.util.bytes :as bs]
    [app.util.template :as tmpl]
@@ -359,7 +360,8 @@
 (defmethod ig/init-key ::routes
   [_ {:keys [session] :as cfg}]
   ["/dbg" {:middleware [[(:middleware session)]
-                        [wrap-async cfg]]}
+                        [hmw/with-promise-async cfg]
+                        [hmw/with-config cfg]]}
    ["" {:handler index-handler}]
    ["/health" {:handler health-handler}]
    ["/changelog" {:handler changelog-handler}]

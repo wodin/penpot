@@ -123,14 +123,15 @@
 (s/def ::awsns-handler fn?)
 (s/def ::session map?)
 (s/def ::debug-routes vector?)
+(s/def ::auth-routes vector?)
 
 (defmethod ig/pre-init-spec ::router [_]
-  (s/keys :req-un [::rpc ::mtx/metrics ::ws ::oauth ::storage ::assets
+  (s/keys :req-un [::rpc ::mtx/metrics ::ws ::storage ::assets
                    ::session ::feedback ::awsns-handler ::debug-routes
-                   ::audit-handler]))
+                   ::auth-routes ::audit-handler]))
 
 (defmethod ig/init-key ::router
-  [_ {:keys [ws session rpc oauth metrics assets feedback debug-routes] :as cfg}]
+  [_ {:keys [ws session rpc oauth metrics assets feedback] :as cfg}]
   (rr/router
    [["" {:middleware [[middleware/server-timing]
                       [middleware/format-response]
@@ -145,7 +146,7 @@
       ["/by-file-media-id/:id" {:handler (:file-objects-handler assets)}]
       ["/by-file-media-id/:id/thumbnail" {:handler (:file-thumbnails-handler assets)}]]
 
-     debug-routes
+     (:debug-routes cfg)
 
      ["/webhooks"
       ["/sns" {:handler (:awsns-handler cfg)
@@ -155,22 +156,26 @@
                            :handler ws
                            :allowed-methods #{:get}}]
 
-     ["/api" {:middleware [[middleware/cors]
-                           (:middleware session)]}
+     ["/api" {:middleware [[middleware/cors]]}
       ["/_doc" {:handler (doc/handler rpc)
                 :allowed-methods #{:get}}]
       ["/feedback" {:handler feedback
+                    :middleware [(:middleware session)]
                     :allowed-methods #{:post}}]
 
-      ["/auth/oauth/:provider" {:handler (:handler oauth)
-                                :allowed-methods #{:post}}]
-      ["/auth/oauth/:provider/callback" {:handler (:callback-handler oauth)
-                                         :allowed-methods #{:get}}]
+      (:auth-routes cfg)
+
+      ;; ["/auth/oauth/:provider" {:handler (:handler oauth)
+      ;;                           :allowed-methods #{:post}}]
+      ;; ["/auth/oauth/:provider/callback" {:handler (:callback-handler oauth)
+      ;;                                    :allowed-methods #{:get}}]
 
       ["/audit/events" {:handler (:audit-handler cfg)
+                        :middleware [(:middleware session)]
                         :allowed-methods #{:post}}]
 
-      ["/rpc"
+      ;; TODO: move under rpc
+      ["/rpc" {:middleware [(:middleware session)]}
        ["/command/:command" {:handler (:command-handler rpc)}]
        ["/query/:type" {:handler (:query-handler rpc)}]
        ["/mutation/:type" {:handler (:mutation-handler rpc)
