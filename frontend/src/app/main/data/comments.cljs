@@ -75,9 +75,9 @@
 
     (ptk/reify ::create-comment-thread
       ptk/WatchEvent
-      (watch [_ _ _]
-        (->> (rp/mutation :create-comment-thread params)
-             (rx/mapcat #(rp/query :comment-thread {:file-id (:file-id %) :id (:id %)}))
+      (watch [_ state _]
+        (->> (rp/mutation :create-comment-thread (assoc params :share-id (get-in state [:viewer-local :share-id])))
+             (rx/mapcat #(rp/query :comment-thread {:file-id (:file-id %) :id (:id %) :share-id (get-in state [:viewer-local :share-id])}))
              (rx/map #(partial created %))
              (rx/catch #(rx/throw {:type :comment-error})))))))
 
@@ -86,9 +86,9 @@
   (us/assert ::comment-thread thread)
   (ptk/reify ::update-comment-thread-status
     ptk/WatchEvent
-    (watch [_ _ _]
+    (watch [_ state _]
       (let [done #(d/update-in-when % [:comment-threads id] assoc :count-unread-comments 0)]
-        (->> (rp/mutation :update-comment-thread-status {:id id})
+        (->> (rp/mutation :update-comment-thread-status {:id id :share-id (get-in state [:viewer-local :share-id])})
              (rx/map (constantly done))
              (rx/catch #(rx/throw {:type :comment-error})))))))
 
@@ -105,8 +105,8 @@
       (d/update-in-when state [:comment-threads id] assoc :is-resolved is-resolved))
 
     ptk/WatchEvent
-    (watch [_ _ _]
-      (->> (rp/mutation :update-comment-thread {:id id :is-resolved is-resolved})
+    (watch [_ state _]
+      (->> (rp/mutation :update-comment-thread {:id id :is-resolved is-resolved :share-id (get-in state [:viewer-local :share-id])})
            (rx/catch #(rx/throw {:type :comment-error}))
            (rx/ignore)))))
 
@@ -119,9 +119,9 @@
             (update-in state [:comments (:id thread)] assoc (:id comment) comment))]
     (ptk/reify ::create-comment
       ptk/WatchEvent
-      (watch [_ _ _]
+      (watch [_ state _]
         (rx/concat
-         (->> (rp/mutation :add-comment {:thread-id (:id thread) :content content})
+         (->> (rp/mutation :add-comment {:thread-id (:id thread) :content content :share-id (get-in state [:viewer-local :share-id])})
               (rx/map #(partial created %))
               (rx/catch #(rx/throw {:type :comment-error})))
          (rx/of (refresh-comment-thread thread)))))))
@@ -135,8 +135,8 @@
       (d/update-in-when state [:comments thread-id id] assoc :content content))
 
     ptk/WatchEvent
-    (watch [_ _ _]
-      (->> (rp/mutation :update-comment {:id id :content content})
+    (watch [_ state _]
+      (->> (rp/mutation :update-comment {:id id :content content :share-id (get-in state [:viewer-local :share-id])})
            (rx/catch #(rx/throw {:type :comment-error}))
            (rx/ignore)))))
 
@@ -151,8 +151,8 @@
           (update :comment-threads dissoc id)))
 
     ptk/WatchEvent
-    (watch [_ _ _]
-      (->> (rp/mutation :delete-comment-thread {:id id})
+    (watch [_ state _]
+      (->> (rp/mutation :delete-comment-thread {:id id :share-id (get-in state [:viewer-local :share-id])})
            (rx/catch #(rx/throw {:type :comment-error}))
            (rx/ignore)))))
 
@@ -165,8 +165,8 @@
       (d/update-in-when state [:comments thread-id] dissoc id))
 
     ptk/WatchEvent
-    (watch [_ _ _]
-      (->> (rp/mutation :delete-comment {:id id})
+    (watch [_ state _]
+      (->> (rp/mutation :delete-comment {:id id :share-id (get-in state [:viewer-local :share-id])})
            (rx/catch #(rx/throw {:type :comment-error}))
            (rx/ignore)))))
 
@@ -177,8 +177,8 @@
             (assoc-in state [:comment-threads id] thread))]
     (ptk/reify ::refresh-comment-thread
       ptk/WatchEvent
-      (watch [_ _ _]
-        (->> (rp/query :comment-thread {:file-id file-id :id id})
+      (watch [_ state _]
+        (->> (rp/query :comment-thread {:file-id file-id :id id :share-id (get-in state [:viewer-local :share-id])})
              (rx/map #(partial fetched %))
              (rx/catch #(rx/throw {:type :comment-error})))))))
 
@@ -189,8 +189,8 @@
             (assoc state :comment-threads (d/index-by :id data)))]
     (ptk/reify ::retrieve-comment-threads
       ptk/WatchEvent
-      (watch [_ _ _]
-        (->> (rp/query :comment-threads {:file-id file-id})
+      (watch [_ state _]
+        (->> (rp/query :comment-threads {:file-id file-id :share-id (get-in state [:viewer-local :share-id])})
              (rx/map #(partial fetched %))
              (rx/catch #(rx/throw {:type :comment-error})))))))
 
@@ -201,8 +201,8 @@
             (update state :comments assoc thread-id (d/index-by :id comments)))]
     (ptk/reify ::retrieve-comments
       ptk/WatchEvent
-      (watch [_ _ _]
-        (->> (rp/query :comments {:thread-id thread-id})
+      (watch [_ state _]
+        (->> (rp/query :comments {:thread-id thread-id :share-id (get-in state [:viewer-local :share-id])})
              (rx/map #(partial fetched %))
              (rx/catch #(rx/throw {:type :comment-error})))))))
 

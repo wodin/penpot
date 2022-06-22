@@ -179,6 +179,17 @@
   (let [{:keys [page-id section index]} params
         {:keys [file users project permissions]} data
 
+        allowed (or
+                 (= section :interactions)
+                 (and (= section :comments)
+                      (or (:can-edit permissions)
+                          (and (true? (:is-logged permissions))
+                               (= (:who-comment permissions) "all"))))
+                 (and (= section :handoff)
+                      (or (:can-edit permissions)
+                          (and (true? (:is-logged permissions))
+                               (= (:who-inspect permissions) "all")))))        
+
         local (mf/deref refs/viewer-local)
 
         nav-scroll (:nav-scroll local)
@@ -256,6 +267,9 @@
 
     (when (nil? page)
       (ex/raise :type :not-found))
+    
+    (when (not allowed) 
+      (st/emit! (dv/go-to-section :interactions)))
 
     ;; Set the page title
     (mf/use-effect
@@ -362,6 +376,8 @@
              fonts (into #{} (keep :font-id) text-nodes)]
          (run! fonts/ensure-loaded! fonts))))
 
+
+
     [:div#viewer-layout {:class (dom/classnames
                                  :force-visible (:show-thumbnails local)
                                  :viewer-layout (not= section :handoff)
@@ -410,25 +426,25 @@
              :index index
              :viewer-pagination viewer-pagination}]
 
-                       
-            [:& viewer-wrapper
-             {:wrapper-size wrapper-size
-              :scroll scroll
-              :orig-frame orig-frame
-              :orig-viewport-ref orig-viewport-ref
-              :orig-size orig-size
-              :page page
-              :file file
-              :users users
-              :current-viewport-ref current-viewport-ref              
-              :size size
-              :frame frame
-              :interactions-mode interactions-mode
-              :overlays overlays
-              :zoom zoom
-              :section section
-              :index index
-              :children-bounds children-bounds}]))]]]))
+
+           [:& viewer-wrapper
+            {:wrapper-size wrapper-size
+             :scroll scroll
+             :orig-frame orig-frame
+             :orig-viewport-ref orig-viewport-ref
+             :orig-size orig-size
+             :page page
+             :file file
+             :users users
+             :current-viewport-ref current-viewport-ref
+             :size size
+             :frame frame
+             :interactions-mode interactions-mode
+             :overlays overlays
+             :zoom zoom
+             :section section
+             :index index
+             :children-bounds children-bounds}]))]]]))
 
 ;; --- Component: Viewer Page
 
