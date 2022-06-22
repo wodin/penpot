@@ -345,7 +345,6 @@
 (mf/defc comment-thread
   [{:keys [item users on-click] :as props}]
   (let [owner (get users (:owner-id item))
-
         on-click*
         (mf/use-callback
          (mf/deps item)
@@ -356,7 +355,7 @@
              (on-click item))))]
 
     [:div.comment {:on-click on-click*}
-     [:div.author
+     [:div.author.kk
       [:div.thread-bubble
        {:class (dom/classnames
                 :resolved (:is-resolved item)

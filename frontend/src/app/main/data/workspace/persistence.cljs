@@ -258,17 +258,19 @@
   [project-id file-id]
   (ptk/reify ::fetch-bundle
     ptk/WatchEvent
-    (watch [_ _ _]
+    (watch [_ state _]
       (->> (rx/zip (rp/query :file-raw {:id file-id})
                    (rp/query :team-users {:file-id file-id})
                    (rp/query :project {:id project-id})
-                   (rp/query :file-libraries {:file-id file-id}))
+                   (rp/query :file-libraries {:file-id file-id})
+                   (rp/query :file-comments-users {:file-id file-id :share-id (get-in state [:viewer-local :share-id])}))
            (rx/take 1)
-           (rx/map (fn [[file-raw users project libraries]]
+           (rx/map (fn [[file-raw users project libraries file-comments-users]]
                      {:file-raw file-raw
                       :users users
                       :project project
-                      :libraries libraries}))
+                      :libraries libraries
+                      :file-comments-users file-comments-users}))
            (rx/mapcat (fn [{:keys [project] :as bundle}]
                         (rx/of (ptk/data-event ::bundle-fetched bundle)
                                (df/load-team-fonts (:team-id project)))))))))
