@@ -21,6 +21,29 @@
   (s/keys :req-un [::id ::name ::ctt/objects]
           :opt-un [::type ::path]))
 
+(defn make-container
+  [page-or-component type]
+  (assoc page-or-component :type type))
+
+(defn page?
+  [container]
+  (= (:type container) :page))
+
+(defn component?
+  [container]
+  (= (:type container) :component))
+
+(defn get-container
+  [file type id]
+  (us/assert map? file)
+  (us/assert ::type type)
+  (us/assert uuid? id)
+
+  (-> (if (= type :page)
+        (get-in file [:pages-index id])
+        (get-in file [:components id]))
+      (assoc :type type)))
+
 (defn get-shape
   [container shape-id]
   (us/assert ::container container)
@@ -28,6 +51,10 @@
   (-> container
       (get :objects)
       (get shape-id)))
+
+(defn shapes-seq
+  [container]
+  (vals (:objects container)))
 
 (defn instantiate-component
   [container component component-file position]

@@ -13,6 +13,7 @@
    [app.common.pages.changes :as ch]
    [app.common.pages.changes-spec :as pcs]
    [app.common.pages.init :as init]
+   [app.common.types.file :as ctf]
    [app.common.types.page :as ctp]
    [app.common.spec :as us]
    [app.common.types.page :as ctp]
@@ -169,7 +170,7 @@
   ([id name]
    {:id id
     :name name
-    :data (-> init/empty-file-data
+    :data (-> ctf/empty-file-data
               (assoc :id id))
 
     ;; We keep the changes so we can send them to the backend

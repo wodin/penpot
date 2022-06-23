@@ -150,7 +150,6 @@
 
     [base index-base-a index-base-b]))
 
-
 (defn is-shape-over-shape?
   [objects base-shape-id over-shape-id {:keys [top-frames?]}]
 

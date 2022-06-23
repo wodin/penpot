@@ -10,6 +10,7 @@
    [app.common.pages :as cp]
    [app.common.pages.migrations :as pmg]
    [app.common.spec :as us]
+   [app.common.types.file :as ctf]
    [app.common.uuid :as uuid]
    [app.config :as cf]
    [app.db :as db]
@@ -69,7 +70,7 @@
               deleted-at nil}
          :as params}]
   (let [id   (or id (:id data) (uuid/next))
-        data (or data (cp/make-file-data id))
+        data (or data (ctf/make-file-data id))
         file (db/insert! conn :file
                          {:id id
                           :project-id project-id

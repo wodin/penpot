@@ -10,15 +10,10 @@
    [app.common.data :as d]
    [app.common.exceptions :as ex]
    [app.common.geom.shapes :as gsh]
-   [app.common.pages.common :refer [file-version default-color]]
+   [app.common.pages.common :refer [default-color]]
    [app.common.types.page :as ctp]
    [app.common.types.pages-list :as ctpl]
    [app.common.uuid :as uuid]))
-
-(def empty-file-data
-  {:version file-version
-   :pages []
-   :pages-index {}})
 
 (def default-shape-attrs
   {})
@@ -125,16 +120,6 @@
    :y (:y selection-rect)
    :width (:width selection-rect)
    :height (:height selection-rect)})
-
-(defn make-file-data
-  ([file-id]
-   (make-file-data file-id (uuid/next)))
-
-  ([file-id page-id]
-   (let [page (ctp/make-empty-page page-id "Page-1")]
-     (-> empty-file-data
-         (assoc :id file-id)
-         (ctpl/add-page page)))))
 
 (defn setup-rect-selrect
   "Initializes the selrect and points for a shape"
